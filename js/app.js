@@ -78,55 +78,88 @@ function importImgEdit(event){
     
 }
 
-function createNewProduct(){
-
-
-    idProduct++;
-    const newFood = { 
-        id: idProduct+"",
+function createNewProduct() {
+    const productValues = {
         description: newDescription.value,
         category: newCategory.value,
         quantity: parseInt(newQuantity.value),
         product: newProduct.value,
         price: parseFloat(newPrice.value),
         image: imageSelected,
-        quantityCart:0
+        quantityCart: 0
+    };
+
+    const isEmptyField = Object.values(productValues).some(value => value === '' || value === null || value === undefined);
+    const isNumericQuantity = !isNaN(productValues.quantity)
+    const isNumericPrice = !isNaN(productValues.price)
+
+    if (isEmptyField || !isNumericQuantity || !isNumericPrice) {
+        alert("Por favor, completa todos los campos correctamente. Los campos de cantidad y precio deben ser valores numéricos.");
+        return
     }
+
+    idProduct++;
+    const newFood = { 
+        id: idProduct +"",
+        ...productValues
+    }
+
     foods.push(newFood)
     localStorage.setItem("foods", JSON.stringify(foods))
     renderCards()
     resetFields()
     hideModal()
-    console.log(typeof foods[foods.length-1].quantity);
-    console.log(foods);
 }
 
-function editProduct(e){
+
+
+function editProduct(e) {
     const idButton = e.currentTarget.id
+    const id = idButton.split(`-`)[0]
+    const productEdit = foods.find(food => food.id === id)
+
+    editProductTitle.value = productEdit.product
+    editCategory.value = productEdit.category
+    editPrice.value = productEdit.price
+    editQuantity.value = productEdit.quantity
+    editDescription.value = productEdit.description
     showModalEdit()
+
     editProductt.addEventListener("click", () => editProduct2(idButton))
 }
 
-function editProduct2(idButton){
-    const id = idButton.split("-")
-    const productEdit = foods.find(food => food.id === id[0]);
-    productEdit.description = editDescription.value,
-    productEdit.category= editCategory.value,
-    productEdit.quantity= parseInt(editQuantity.value),
-    productEdit.product= editProductTitle.value,
-    productEdit.price= parseFloat(editPrice.value),
-    productEdit.image= editImageSelected,
-    localStorage.setItem("foods", JSON.stringify(foods))
+function editProduct2(idButton) {
+    const id = idButton.split("-");
+    const productEdit = foods.find(food => food.id === id[0])
 
-    const productEditCart = productsCart.findIndex(food => food.id === id[0]);
-    productsCart[productEditCart] = productEdit;
-    localStorage.setItem("productsInCart", JSON.stringify(productsCart));
+    if ([editDescription.value, editCategory.value, editProductTitle.value, editImageSelected].some(value => value === '' || value === null || value === undefined)) {
+        alert("No se puede editar el producto porque hay campos vacíos.")
+        return
+    }
+
+    if (isNaN(editQuantity.value) || isNaN(editPrice.value)) {
+        alert("La cantidad y el precio deben ser valores numéricos.")
+        return
+    }
+    productEdit.description = editDescription.value
+    productEdit.category = editCategory.value
+    productEdit.quantity = parseInt(editQuantity.value)
+    productEdit.product = editProductTitle.value
+    productEdit.price = parseFloat(editPrice.value)
+    productEdit.image = editImageSelected
+
+    const productEditCart = productsCart.findIndex(food => food.id === id[0])
+    productsCart[productEditCart] = productEdit
 
     renderCards()
     resetFieldsEdit()
     hideModalEdit()
-    
+
+    localStorage.setItem("productsInCart", JSON.stringify(productsCart))
+    localStorage.setItem("foods", JSON.stringify(foods))
 }
+
+
 
 function filterProductByName() {
     const searchTerm = searchProductInput.value.toLowerCase();
@@ -155,6 +188,7 @@ function showModal(){
 
 function hideModal(){
     modal.style.display = `none`
+    resetFields()
 }
 
 function resetFields(){
